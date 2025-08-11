@@ -15,18 +15,20 @@ source_type = st.radio("Choose data.json source:", ["From URL", "From local file
 
 catalog = None
 if source_type == "From URL":
-    url_input = st.text_input("Enter the URL to data.json:", "https://www.commerce.gov/sites/default/files/data.json")
+    url = st.text_input("Enter the URL to data.json:", "https://www.commerce.gov/sites/default/files/data.json")
     if st.button("Load Catalog"):
-        url = url_input.strip()
-        if not url.startswith(("http://", "https://")):
-            url = "https://" + url
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/115.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Referer": "https://www.commerce.gov/",
+            "Connection": "keep-alive",
+        }
 
         try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                              "AppleWebKit/537.36 (KHTML, like Gecko) "
-                              "Chrome/115.0.0.0 Safari/537.36"
-            }
             response = requests.get(url, headers=headers)
             response.raise_for_status()
             catalog = response.json()
@@ -52,7 +54,6 @@ if catalog:
     if not datasets:
         st.warning("No datasets found in the catalog.")
     else:
-        # Collect all unique keys from all datasets
         all_keys = set()
         for ds in datasets:
             all_keys.update(ds.keys())
@@ -65,7 +66,6 @@ if catalog:
             for key in all_keys:
                 val = ds.get(key, None)
 
-                # Parse and track 'modified' dates for summary
                 if key == "modified" and val:
                     try:
                         mod_date = datetime.fromisoformat(val)
