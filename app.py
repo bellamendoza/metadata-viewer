@@ -15,10 +15,19 @@ source_type = st.radio("Choose data.json source:", ["From URL", "From local file
 
 catalog = None
 if source_type == "From URL":
-    url = st.text_input("Enter the URL to data.json:", "https://www.commerce.gov/sites/default/files/data.json")
+    url_input = st.text_input("Enter the URL to data.json:", "https://www.commerce.gov/sites/default/files/data.json")
     if st.button("Load Catalog"):
+        url = url_input.strip()
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+
         try:
-            response = requests.get(url)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/115.0.0.0 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             catalog = response.json()
         except Exception as e:
@@ -33,7 +42,7 @@ elif source_type == "From local file (.json)":
             st.error(f"Error reading file: {e}")
 
 def flatten_value(value):
-    """Helper to convert dicts/lists to JSON strings for display."""
+    """Convert dicts/lists to JSON strings for display."""
     if isinstance(value, (dict, list)):
         return json.dumps(value)
     return value
@@ -43,12 +52,11 @@ if catalog:
     if not datasets:
         st.warning("No datasets found in the catalog.")
     else:
-        # Get all keys in all dataset entries
+        # Collect all unique keys from all datasets
         all_keys = set()
         for ds in datasets:
             all_keys.update(ds.keys())
 
-        # Prepare list of dicts with all keys, filling missing keys with None
         table_data = []
         modified_dates = []
 
@@ -56,7 +64,8 @@ if catalog:
             row = {}
             for key in all_keys:
                 val = ds.get(key, None)
-                # Special handling for 'modified' field to parse dates and collect max date
+
+                # Parse and track 'modified' dates for summary
                 if key == "modified" and val:
                     try:
                         mod_date = datetime.fromisoformat(val)
@@ -68,19 +77,17 @@ if catalog:
                     if mod_date:
                         modified_dates.append(mod_date)
                         val = mod_date.strftime('%Y-%m-%d')
-                # Flatten complex types
+
                 val = flatten_value(val)
                 row[key] = val
             table_data.append(row)
 
-        # Display last updated
         if modified_dates:
             last_updated = max(modified_dates)
             st.success(f"Catalog last updated on: **{last_updated.strftime('%B %d, %Y')}**")
         else:
             st.warning("No 'modified' dates found in datasets.")
 
-        # Display table
         df = pd.DataFrame(table_data)
         st.subheader("Metadata")
         st.dataframe(df)
