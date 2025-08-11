@@ -10,7 +10,6 @@ st.set_page_config(
 
 st.title("Metadata Viewer")
 
-# Choose data source
 source_type = st.radio("Choose data.json source:", ["From URL", "From local file (.json)"])
 
 catalog = None
@@ -84,7 +83,7 @@ if catalog:
 
         if modified_dates:
             last_updated = max(modified_dates)
-            st.success(f"Catalog last updated on: **{last_updated.strftime('%B %d, %Y')}**")
+            st.success(f"Newest modified dataset on: **{last_updated.strftime('%B %d, %Y')}**")
         else:
             st.warning("No 'modified' dates found in datasets.")
 
