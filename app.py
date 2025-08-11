@@ -15,7 +15,7 @@ source_type = st.radio("Choose data.json source:", ["From URL", "From local file
 
 catalog = None
 if source_type == "From URL":
-    url = st.text_input("Enter the URL to data.json:", "https://www.commerce.gov/sites/default/files/data.json")
+    url = st.text_input("Enter the URL to data.json:", "https://www.bea.gov/data.json")
     if st.button("Load Catalog"):
         
         headers = {
